@@ -10,10 +10,7 @@
             text-align: center;
             font-family: Arial, sans-serif;
         }
-        #qrcode {
-            margin: 20px auto;
-        }
-        #reader {
+        #contenedor {
             position: relative;
             width: 300px;
             height: 300px;
@@ -26,7 +23,9 @@
             width: 100%;
             height: 4px;
             background-color: red;
-            animation: scan 2s linear infinite;
+            animation: scan 2s alternate infinite;
+            top: 0;
+            z-index: 10; /* Asegura que esté delante */
         }
         @keyframes scan {
             0% {
@@ -41,11 +40,13 @@
 <body>
 
     <!-- Escáner de QR con efecto -->
-    <div id="reader">
+    <div id="contenedor">
         <div class="scanner-line"></div>
+        <div id="reader" style="width: 300px; height: 300px;"></div>
     </div>
 
     <script>
+
         const html5QrCode = new Html5Qrcode("reader");
 
         html5QrCode.start(
