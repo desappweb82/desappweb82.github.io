@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Escanear QR</title>
+    <script src="./html5-qrcode.min.js"></script>
+</head>
+<body>
+    <div id="reader" style="width:300px"></div>
+
+    <script>
+        const html5QrCode = new Html5Qrcode("reader");
+
+        html5QrCode.start(
+            { facingMode: "environment" }, // Cámara trasera
+            {
+                fps: 10,
+                qrbox: 250,
+            },
+            (decodedText, decodedResult) => {
+                console.log(`Contenido del QR: ${decodedText}`);
+                alert(`Contenido del QR: ${decodedText}`);
+            },
+            (errorMessage) => {
+                console.log(`Error: ${errorMessage}`);
+            }
+        );
+    </script>
+</body>
+</html>
