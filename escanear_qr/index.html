@@ -19,9 +19,8 @@
                 qrbox: 250,
             },
             (decodedText, decodedResult) => {
-                var obj = JSON.parse(decodedText);
-                console.log(`Contenido del QR: ${obj.nombre}`);
-                alert(`Contenido del QR: ${obj.nombre}`);
+                console.log(`Contenido del QR: ${decodedText}`);
+                alert(`Contenido del QR: ${decodedText}`);
             },
             (errorMessage) => {
                 console.log(`Error: ${errorMessage}`);
