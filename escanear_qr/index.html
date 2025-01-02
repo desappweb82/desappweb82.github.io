@@ -19,8 +19,15 @@
                 qrbox: 250,
             },
             (decodedText, decodedResult) => {
-                console.log(`Contenido del QR: ${decodedResult}`);
-                alert(`Contenido del QR: ${decodedResult}`);
+                try {
+                    const obj = JSON.parse(decodedText); // Convertir texto en JSON
+                    console.log(`Nombre: ${obj.nombre}`);
+                    console.log(`Edad: ${obj.edad}`);
+                    console.log(`Sexo: ${obj.sexo}`);
+                    alert(`Nombre: ${obj.nombre}\nEdad: ${obj.edad}\nSexo: ${obj.sexo}`);
+                } catch (e) {
+                    console.error("El contenido del QR no es un JSON válido.");
+                }
             },
             (errorMessage) => {
                 console.log(`Error: ${errorMessage}`);
