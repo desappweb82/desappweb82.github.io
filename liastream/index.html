@@ -9,7 +9,21 @@
         ////document.location.href = 'https://script.google.com/macros/s/AKfycbw1zCWnCgnVJ_a0e5hLyrOv6903m7eE3DX8EfLqwUq51LRwBkrUccBhlFVgcoKGD5HiIQ/exec';
     
         $(document).ready(function(){
-            window.location.href = 'https://script.google.com/macros/s/AKfycbw1zCWnCgnVJ_a0e5hLyrOv6903m7eE3DX8EfLqwUq51LRwBkrUccBhlFVgcoKGD5HiIQ/exec';
+        
+            // Función para detectar si es un dispositivo móvil  
+            function isMobileDevice() {  
+                return /Mobi/.test(navigator.userAgent);  
+            }
+            
+            // Redirigir si es un dispositivo móvil  
+            if (isMobileDevice()) {  
+                window.location.href = 'https://script.google.com/macros/s/AKfycbw1zCWnCgnVJ_a0e5hLyrOv6903m7eE3DX8EfLqwUq51LRwBkrUccBhlFVgcoKGD5HiIQ/exec';  
+            } else {  
+                // Si se desea, se puede agregar lógica alternativa para desktop  
+                console.log("No es un dispositivo móvil.");
+                alert("Solamente la app funciona en dispositivos móviles.");  
+            }
+        
         });
     
     </script>
