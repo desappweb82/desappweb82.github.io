@@ -1,0 +1,173 @@
+<main class="d-flex flex-column bg-black-50 vh-100">
+    <section>
+
+        <section class="titulares-panel-loader d-none d-flex flex-column justify-content-center align-items-center vh-100" style="background-color:rgba(255,255,255,0.8); position:fixed; top:0px; left:0px; width:100%;">
+            <span class="spinner-border text-primary" role="status"></span>
+            <span id="titulares-loader-text" class="text-black-50">Cargando...</span>
+        </section>
+
+        <section class="lista-titulares vh-100">
+        </section>
+
+    </section>
+
+    <nav class="titulares-bottom-bar navbar navbar-light navbar-expand-md bg-primary d-none" style="border-top: 1px solid var(--bs-gray); position:sticky; bottom:0px;">
+        <div class="container-fluid">
+            <div class="d-flex flex-fill gap-2">
+            <textarea class="titulares-texto border rounded p-2" style="width: 100%;"></textarea>
+            <button class="btn-guardar-titulares btn btn-success border rounded shadow" type="button">
+                <i class="far fa-paper-plane"></i>
+            </button>
+            </div>
+        </div>
+    </nav>
+
+</main>
+
+<script>
+// Función para leer registros
+async function leerTitulares() {
+    try{
+        $('.titulares-texto').val('');
+        $('.titulares-panel-loader').removeClass('d-none');
+        $('.titulares-bottom-bar').addClass('d-none');
+
+        const response = await fetch(`${apiUrl}?action=leer_titulares`);
+
+        if (!response.ok) {  
+            throw new Error('Error en la solicitud: ' + response.statusText);  
+        }
+        
+        // Procesar los registros desde la respuesta  
+        const data = await response.json();
+        
+        const lista = $('.lista-titulares');
+        lista.find('.titulares-elem-item').remove(); // Limpiar elementos existentes
+
+        data.forEach((registro, index) => {
+            const item = `
+            <div class="titulares-elem-item d-flex justify-content-between p-2 gap-2" style="border-bottom: 1px solid var(--bs-gray-400);">
+            <div>
+                <i class="far fa-bookmark text-success"></i>
+            </div>
+            <p class="editable-text text-black-50" data-index="${index}">${registro[0]}</p>
+            <div>
+                <button class="btn-borrar-titulares btn" type="button" data="${registro[0]}">
+                <i class="far fa-trash-alt text-black-50"></i>
+                </button>
+            </div>
+            </div>`;
+            lista.append(item);
+        });
+
+        $('.titulares-panel-loader').addClass('d-none');
+        lista.removeClass('d-none');
+        $('.titulares-bottom-bar').removeClass('d-none');
+
+    }catch(error){
+        console.error("Error al obtener registros:", error);
+    }                
+}
+
+$(document).ready(function(){
+    //CREAR
+    $('.btn-guardar-titulares').on('click', async function(){
+            
+        let value = $('.titulares-texto').val();
+        let data = {
+            titulo:value
+        };
+
+        if(value !== ''){
+            $('#titulares-loader-text').text('Realizando Operacion...');
+            $('.titulares-panel-loader').removeClass('d-none');
+            const response = await fetch(`${apiUrl}?action=nuevo_titulares&data=${encodeURIComponent(JSON.stringify(data))}`)
+            
+            if (!response.ok) {
+                console.error('Error en la solicitud:', response.statusText);  
+                alert('Error al crear...');                 
+            }else{
+                $('.titulares-panel-loader').addClass('d-none');
+                $('#titulares-loader-text').text('Cargando...');
+                //alert('Titulares creado correctamente...!');
+                //$('.titulares-texto').val('');
+                leerTitulares();
+            }
+        }else{
+            alert('El campo no debe de estar vacio...');
+        }
+    });
+
+    //EDITAR
+    $('.lista-titulares').on('click', '.editable-text', function(){
+        const $p = $(this);
+        const currentText = $p.text();
+        const index = $p.data('index');
+
+        // Reemplazar con un input
+        const $input = $(`<input type="text" class="form-control" value="${currentText}">`);
+        $p.replaceWith($input);
+
+        // Guardar cambios al perder el foco
+        $input.on('blur', async function () {
+            const newText = $input.val();
+
+            // Validar cambios
+            if (newText !== currentText) {
+                $('#titulares-loader-text').text('Realizando Operacion...');
+                $('.titulares-panel-loader').removeClass('d-none');
+
+                const data = {
+                    oldData:currentText,
+                    newData:newText
+                }
+
+                const response = await fetch(`${apiUrl}?action=actualizar_titulares&data=${encodeURIComponent(JSON.stringify(data))}`);
+
+                if(!response.ok){
+                    console.error('Error en la solicitud:', response.statusText);  
+                    alert('Error al crear...');   
+                }else{
+                    console.log('Edicion exitosa...');
+                    $('.titulares-panel-loader').addClass('d-none');
+                    $('#titulares-loader-text').text('Cargando...');
+                    leerTitulares();
+                }
+            }
+
+            // Reemplazar input con texto actualizado
+            const $updatedText = $(`<p class="text-black-50 editable-text" data-index="${index}">${newText}</p>`);
+            $input.replaceWith($updatedText);
+        });
+
+        // Enfocar el input automáticamente
+        $input.focus();
+
+    });
+
+    //BORRAR
+    $(document).on('click', '.btn-borrar-titulares', async function(){
+        let data = $(this).attr('data');
+        if(confirm('Deseas borrar este registro?')){
+
+            $('#titulares-loader-text').text('Realizando Operacion...');
+            $('.titulares-panel-loader').removeClass('d-none');
+
+            const response = await fetch(`${apiUrl}?action=borrar_titulares&data=${encodeURIComponent(JSON.stringify(data))}`);
+
+            if(!response.ok){
+                console.error('Error en la solicitud:', response.statusText);  
+                    alert('Error al borrar...');
+            }else{
+                console.log(response);
+                $('.titulares-panel-loader').addClass('d-none');
+                $('#titulares-loader-text').text('Cargando...');
+                leerTitulares();
+            }
+        }
+
+    });
+
+    leerTitulares();
+});
+</script>

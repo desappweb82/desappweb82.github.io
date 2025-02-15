@@ -1,0 +1,129 @@
+<main class="d-flex flex-column bg-black-50 vh-100">
+    <section>
+
+        <section class="whatsapp-panel-loader d-flex flex-column justify-content-center align-items-center vh-100" style="background-color:rgba(255,255,255,0.8); position:fixed; top:0px; left:0px; width:100%;">
+            <span class="spinner-border text-primary" role="status"></span>
+            <span id="whatsapp-loader-text" class="text-black-50">Cargando...</span>
+        </section>
+
+        <section class="lista-whatsapp vh-100">
+        </section>
+
+    </section>
+
+    <a href="javascript:void(0);" id="btn-nuevo-whatsapp" class="whatsapp-btn-float d-none btn text-bg-success border rounded shadow d-flex justify-content-center align-items-center" style="position: fixed; bottom: 20px; right: 60px;">
+        <i class="fab fa-whatsapp fs-2" style="font-size: 16px;"></i> Nuevo
+    </a>
+
+</main>
+
+<script>
+    
+// Función para leer registros
+async function leerWhatsApp() {  
+    try {  
+        $('.whatsapp-panel-loader').removeClass('d-none');  
+        //$('.whatsapp-bottom-bar').addClass('d-none');  
+
+        // Hacer una solicitud GET al API  
+        const response = await fetch(`${apiUrl}?action=leer_whatsapp`);  
+
+        if (!response.ok) {  
+            throw new Error('Error en la solicitud: ' + response.statusText);  
+        }  
+
+        // Procesar los registros desde la respuesta  
+        const data = await response.json();  
+
+        const lista = $('.lista-whatsapp');  
+        lista.find('.whatsapp-elem-item').remove(); // Limpiar elementos existentes  
+
+        data.forEach((registro, index) => {  
+            const item = `  
+            <div class="whatsapp-elem-item d-flex justify-content-between p-2 gap-2" style="border-bottom: 1px solid var(--bs-gray-400);">  
+                <div>  
+                    <i class="far fa-bookmark text-success"></i>  
+                </div>  
+                <div class="whatsapp-editable-text d-flex flex-column w-100">  
+                    <p class="text-item editable-nombre text-danger" data-index="${index}">${registro[0]}</p>  
+                    <p class="text-item editable-mensaje text-break text-black-50" data-index="${index}">${registro[1]}</p>  
+                </div>  
+                <div>  
+                    <a href="javascript:void(0);" class="btn-editar-whatsapp btn" type="button">  
+                        <i class="far fa-edit text-black-50"></i>  
+                    </a>  
+                </div>  
+                <div>  
+                    <button class="btn-borrar-whatsapp btn" type="button" data="${registro[0]}">  
+                        <i class="far fa-trash-alt text-black-50"></i>  
+                    </button>  
+                </div>  
+            </div>`;  
+            lista.append(item);  
+        });  
+
+        $('.whatsapp-panel-loader').addClass('d-none');  
+        lista.removeClass('d-none');  
+        //$('.whatsapp-bottom-bar').removeClass('d-none');  
+        $('.whatsapp-btn-float').removeClass('d-none');  
+
+    } catch (error) {  
+        console.error("Error al obtener registros:", error);  
+    }  
+}
+
+$(document).ready(function(){
+
+    leerWhatsApp();
+
+    $('#btn-nuevo-whatsapp').on('click', function(event){
+        event.preventDefault();
+        cargar_pagina('paginas/whatsapp/whatsapp_add.html', 'Nuevo Whatsaap');
+    });     
+
+    $('.lista-whatsapp').on('click', '.btn-editar-whatsapp', function(event){
+        event.preventDefault();
+        //whatsapp-elem-item
+        const nombre = $(this).closest('.whatsapp-elem-item').find('.editable-nombre').text();
+        const mensaje = $(this).closest('.whatsapp-elem-item').find('.editable-mensaje').text();
+
+        cargar_pagina('paginas/whatsapp/whatsapp_edit.html', 'Editar Whatsaap', function(){
+
+            $('form .hidden-whatsapp-nombre').val(nombre);
+            $('form .edit-whatsapp-nombre').val(nombre);
+            $('form .edit-whatsapp-mensaje').val(mensaje);
+
+        });
+        //LoadInternaPage('#edit-whatsapp');
+    });
+
+    //BORRAR
+    $('.lista-whatsapp').on('click', '.btn-borrar-whatsapp', async function(){
+        try{
+            if(confirm('Deseas borrar este registro...?')){
+                const nombre = $(this).attr('data');
+                const data = {
+                    nombre: nombre
+                };
+                $('#whatsapp-loader-text').text('Realizando Operacion...');
+                $('.whatsapp-panel-loader').removeClass('d-none');
+
+                const borrar_response = await fetch(`${apiUrl}?action=borrar_whatsapp&data=${encodeURIComponent(JSON.stringify(data))}`);
+
+                if (!borrar_response.ok) {
+                    console.error('Error en la solicitud:', borrar_response.statusText);  
+                    alert('Error al borrar...');                  
+                }else{
+                    console.log('Borrado exitoso...');
+                    $('.whatsapp-panel-loader').addClass('d-none');
+                    $('#whatsapp-loader-text').text('Cargando...');
+                    leerWhatsApp();
+                }
+            }
+        }catch(error){
+            console.error("Error al obtener registros:", error);
+        }
+    });
+
+});
+</script>

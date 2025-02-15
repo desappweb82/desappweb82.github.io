@@ -1,0 +1,78 @@
+<main class="d-flex flex-column bg-black-50 vh-100">
+    <section>
+
+        <section class="edit-whatsapp-panel-loader d-none d-flex flex-column justify-content-center align-items-center vh-100" style="background-color:rgba(255,255,255,0.8); position:fixed; top:0px; left:0px; width:100%;">
+            <span class="spinner-border text-primary" role="status"></span>
+            <span id="edit-whatsapp-loader-text" class="text-black-50">Cargando...</span>
+        </section>
+            
+        <form class="d-flex align-items-center flex-fill p-3 vh-100">
+            <section class="d-flex flex-column flex-fill gap-3">
+                <div class="d-flex flex-column">
+                <label>Nombre:</label>
+                <input type="hidden" class="hidden-whatsapp-nombre"/>
+                <input class="edit-whatsapp-nombre border rounded p-3" type="text"/>
+                </div>
+
+                <div class="d-flex flex-column">
+                <label>Mensaje:</label>
+                <textarea class="edit-whatsapp-mensaje border rounded p-3"></textarea>
+                </div>
+
+                <div>
+                <input type="button" class="btn-actualizar-whatsapp btn btn-success" value="Actualizar"/>
+                </div>
+            </section>
+        </form>    
+    </section>
+
+</main>
+
+<script>
+async function editarWhatsApp(old_nombre, nombre, mensaje) {  
+    try {  
+        $('#edit-whatsapp-loader-text').text('Realizando Operacion...');  
+        $('.edit-whatsapp-panel-loader').removeClass('d-none');  
+        
+        const data = {  
+            old_nombre: old_nombre,  
+            nombre: nombre,  
+            mensaje: mensaje  
+        };  
+
+        const editar_response = await fetch(`${apiUrl}?action=actualizar_whatsapp&data=${encodeURIComponent(JSON.stringify(data))}`);  
+
+        // Corrección: Cambié 'response' por 'editar_response'.  
+        if (!editar_response.ok) {  
+            console.error('Error en la solicitud:', editar_response.statusText);  
+            alert('Error al guardar...');  
+        } else {  
+            console.log('Edicion exitosa...');  
+            $('.edit-whatsapp-panel-loader').addClass('d-none');  
+            $('#edit-whatsapp-loader-text').text('Cargando...');  
+            cargar_pagina('paginas/whatsapp/whatsapp.html','Whatsapp');  
+        }  
+
+    } catch (error) {  
+        console.error("Error al obtener registros:", error);  
+    } finally {  
+        // Asegúrate de ocultar el loader independientemente del resultado.  
+        $('.edit-whatsapp-panel-loader').addClass('d-none');  
+    }  
+}
+
+$(document).ready(function(){
+    //EDITAR
+    $('.btn-actualizar-whatsapp').on('click', function(){
+        const old_nombre = $(this).closest('form').find('.hidden-whatsapp-nombre').val();
+        const nombre = $(this).closest('form').find('.edit-whatsapp-nombre').val();
+        const mensaje = $(this).closest('form').find('.edit-whatsapp-mensaje').val();
+        if(nombre !== '' || mensaje !== ''){            
+            editarWhatsApp(old_nombre,nombre,mensaje);            
+        }else{
+            alert('Los campo no deben de estar vacios...');
+        }
+    }); 
+});
+
+</script>

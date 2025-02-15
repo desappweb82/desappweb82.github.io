@@ -1,0 +1,174 @@
+<main class="d-flex flex-column bg-black-50 vh-100">
+    <section>
+
+        <section class="Curiosidades-de-la-Feria-panel-loader d-none d-flex flex-column justify-content-center align-items-center vh-100" style="background-color:rgba(255,255,255,0.8); position:fixed; top:0px; left:0px; width:100%;">
+            <span class="spinner-border text-primary" role="status"></span>
+            <span id="Curiosidades-de-la-Feria-loader-text" class="text-black-50">Cargando...</span>
+        </section>
+
+        <section class="lista-Curiosidades-de-la-Feria vh-100">
+        </section>
+
+    </section>
+
+    <nav class="Curiosidades-de-la-Feria-bottom-bar navbar navbar-light navbar-expand-md bg-primary d-none" style="border-top: 1px solid var(--bs-gray); position:sticky; bottom:0px;">
+        <div class="container-fluid">
+            <div class="d-flex flex-fill gap-2">
+            <textarea class="Curiosidades-de-la-Feria-texto border rounded p-2" style="width: 100%;"></textarea>
+            <button class="btn-guardar-Curiosidades-de-la-Feria btn btn-success border rounded shadow" type="button">
+                <i class="far fa-paper-plane"></i>
+            </button>
+            </div>
+        </div>
+    </nav>
+
+</main>
+
+<script>
+// Función para leer registros
+async function leerCuriosidades() {
+    try{
+        $('.Curiosidades-de-la-Feria-panel-loader').removeClass('d-none');
+        $('.Curiosidades-de-la-Feria-bottom-bar').addClass('d-none');
+
+        const response = await fetch(`${apiUrl}?action=leer_curiosidades_de_la_feria`);
+
+        if(!response.ok){
+            throw new Error('Error en la solicitud: ' + response.statusText);            
+        }
+
+        console.log(response);
+        const lista = $('.lista-Curiosidades-de-la-Feria');
+        lista.find('.Curiosidades-de-la-Feria-elem-item').remove(); // Limpiar elementos existentes
+
+        const data = await response.json();
+
+        data.forEach((registro, index) => {
+            const item = `
+            <div class="Curiosidades-de-la-Feria-elem-item d-flex justify-content-between p-2 gap-2" style="border-bottom: 1px solid var(--bs-gray-400);">
+            <div>
+                <i class="far fa-bookmark text-success"></i>
+            </div>
+            <p class="editable-text text-black-50" data-index="${index}">${registro[0]}</p>
+            <div>
+                <button class="btn-borrar-Curiosidades-de-la-Feria btn" type="button" data="${registro[0]}">
+                <i class="far fa-trash-alt text-black-50"></i>
+                </button>
+            </div>
+            </div>`;
+            lista.append(item);
+        });
+
+        $('.Curiosidades-de-la-Feria-panel-loader').addClass('d-none');
+        lista.removeClass('d-none');
+        $('.Curiosidades-de-la-Feria-bottom-bar').removeClass('d-none');
+
+    }catch(error){
+        console.error("Error al obtener registros:", error);
+    }                
+}
+
+$(document).ready(function(){
+    //CREAR
+    $('.btn-guardar-Curiosidades-de-la-Feria').on('click', async function(){
+            
+        let value = $('.Curiosidades-de-la-Feria-texto').val();
+        let data = {
+            titulo:value
+        };
+
+        if(value !== ''){
+
+            $('#Curiosidades-de-la-Feria-loader-text').text('Realizando Operacion...');
+            $('.Curiosidades-de-la-Feria-panel-loader').removeClass('d-none');
+
+            const response = await fetch(`${apiUrl}?action=nueva_curiosidades_de_la_feria&data=${encodeURIComponent(JSON.stringify(data))}`);
+
+            if(!response.ok){
+
+            }else{
+                console.log(response);
+                $('.Curiosidades-de-la-Feria-panel-loader').addClass('d-none');
+                $('#Curiosidades-de-la-Feria-loader-text').text('Cargando...');
+                $('.Curiosidades-de-la-Feria-texto').val('');
+                leerCuriosidades();
+            }
+
+        }else{
+            alert('El campo no debe de estar vacio...');
+        }
+    });
+
+    //EDITAR
+    $('.lista-Curiosidades-de-la-Feria').on('click', '.editable-text', function(){
+        const $p = $(this);
+        const currentText = $p.text();
+        const index = $p.data('index');
+
+        // Reemplazar con un input
+        const $input = $(`<input type="text" class="form-control" value="${currentText}">`);
+        $p.replaceWith($input);
+
+        // Guardar cambios al perder el foco
+        $input.on('blur', async function () {
+            const newText = $input.val();
+
+            // Validar cambios
+            if (newText !== currentText) {
+                $('#Curiosidades-de-la-Feria-loader-text').text('Realizando Operacion...');
+                $('.Curiosidades-de-la-Feria-panel-loader').removeClass('d-none');
+
+                const data = {
+                    oldData:currentText,
+                    newData:newText
+                }
+
+                const response = await fetch(`${apiUrl}?action=actualizar_curiosidades_de_la_feria&data=${encodeURIComponent(JSON.stringify(data))}`);
+
+                if(!response.ok){
+                    console.error('Error en la solicitud:', response.statusText);  
+                    alert('Error al editar...');   
+                }else{
+                    console.log('Guardado exitoso...');
+                    $('.Curiosidades-de-la-Feria-panel-loader').addClass('d-none');
+                    $('#Curiosidades-de-la-Feria-loader-text').text('Cargando...');
+                    leerCuriosidades();
+                }
+            }
+
+            // Reemplazar input con texto actualizado
+            const $updatedText = $(`<p class="text-black-50 editable-text" data-index="${index}">${newText}</p>`);
+            $input.replaceWith($updatedText);
+        });
+
+        // Enfocar el input automáticamente
+        $input.focus();
+
+    });
+
+
+    //BORRAR
+    $(document).on('click', '.btn-borrar-Curiosidades-de-la-Feria', async function(){
+        let data = $(this).attr('data');
+        if(confirm('Deseas borrar este registro?')){
+            $('#Curiosidades-de-la-Feria-loader-text').text('Realizando Operacion...');
+            $('.Curiosidades-de-la-Feria-panel-loader').removeClass('d-none');
+
+            const response = await fetch(`${apiUrl}?action=borrar_curiosidades_de_la_feria&data=${encodeURIComponent(JSON.stringify(data))}`);
+
+            if(!response.ok){
+                console.error('Error en la solicitud:', response.statusText);  
+                alert('Error al borrar...');
+            }else{
+                console.log(response);
+                $('.Curiosidades-de-la-Feria-panel-loader').addClass('d-none');
+                $('#Curiosidades-de-la-Feria-loader-text').text('Cargando...');
+                leerCuriosidades();
+            }
+        }
+
+    });
+
+    leerCuriosidades();
+});
+</script>

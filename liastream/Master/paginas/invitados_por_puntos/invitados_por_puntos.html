@@ -1,0 +1,173 @@
+<main class="d-flex flex-column bg-black-50 vh-100">
+    <section>
+
+        <section class="go-panel-loader d-none d-flex flex-column justify-content-center align-items-center vh-100" style="background-color:rgba(255,255,255,0.8); position:fixed; top:0px; left:0px; width:100%;">
+            <span class="spinner-border text-primary" role="status"></span>
+            <span class="text-black-50">Enviando...</span>
+        </section>
+
+        <section class="panel-loader d-none d-flex flex-column justify-content-center align-items-center vh-100" style="background-color:rgba(255,255,255,0.8); position:fixed; top:0px; left:0px; width:100%;">
+            <span class="spinner-border text-primary" role="status"></span>
+            <span class="text-black-50">Cargando...</span>
+        </section>
+        
+        <section class="panel-lista-invitados d-flex flex-column">
+        </section>
+
+    </section>
+
+    <a href="javascript:void(0);" id="add" class="btn-float btn d-none btn text-bg-success border rounded-circle shadow d-flex justify-content-center align-items-center" style="position: fixed; bottom: 20px; right: 60px; width: 50px;height: 50px;">
+    <i class="fas fa-cloud-upload-alt fs-2" style="font-size: 16px;"></i>
+    </a>
+
+</main>
+<script>
+    // Función para leer registros  
+    async function leerRegistros() {  
+        try {  
+            $('.btn-float').addClass('d-none');  
+            $('.panel-loader').removeClass('d-none');  
+    
+            const response = await fetch(`${apiUrl}?action=leer_invitados_por_puntos`);  
+    
+            if (!response.ok) {  
+                throw new Error('Error en la respuesta: ' + response.statusText);  
+            }  
+    
+            const data = await response.json(); // Procesar la respuesta como JSON  
+            console.log('Lista de Invitados por Grupo:', data);  
+    
+            const lista = $('.panel-lista-invitados');  
+            lista.find('.elem-item, .encabezado').remove(); // Limpiar elementos existentes  
+    
+            // Agrupar registros por el nombre del punto (primer campo)  
+            const grupos = data.reduce((acc, registro) => {  
+                const punto = registro[0]; // El nombre del punto está en el primer campo  
+                if (!acc[punto]) {  
+                    acc[punto] = [];  
+                }  
+                acc[punto].push(registro);  
+                return acc;  
+            }, {});  
+    
+            // Construir el HTML agrupado por punto  
+            Object.keys(grupos).forEach((punto) => {  
+                // Encabezado para el punto  
+                const originalString = punto.toString().toUpperCase();  
+                const modifiedString = originalString.replace(/([A-Za-z])(\d)/g, '$1 $2');  
+                const encabezado = `  
+                    <div class="encabezado d-flex justify-content-end p-2">  
+                        <h6 class="text-primary border-bottom">${modifiedString}</h6>  
+                    </div>`;  
+                lista.append(encabezado);  
+    
+                // Registros del punto  
+                grupos[punto].forEach((registro) => {  
+                    let img = registro[6].toString().split('=');  
+                    const item = `  
+                        <div class="elem-item d-flex gap-3 border-bottom p-1" style="cursor:pointer;">        
+                            <div class="foto" data-src="https://drive.google.com/thumbnail?id=${img[1]}" style="width: 100px; height: 100px; background-image: url('https://drive.google.com/thumbnail?id=${img[1]}'); background-size: cover; background-position: center;">  
+                            </div>  
+                            <div class="d-flex flex-column flex-fill" style="font-size:11px;">  
+                                <span><b class="text-danger">Nombre:</b><br> <span class="field-nombre">${registro[1]}</span></span>  
+                                <span><b class="text-danger">Cargo:</b><br> <span class="field-cargo">${registro[2]}</span></span>  
+                                <input class="field-redSocial" type="hidden" value="${registro[3]}"/>  
+                                <span><b class="text-danger">Ubicación:</b><br> <span class="field-ubicacion">${registro[4]}</span></span>  
+                                <input class="field-tema" type="hidden" value="${registro[5]}"/>  
+                            </div>  
+                            <div class="d-flex align-items-center p-3">  
+                                <input id="formCheck-1" class="form-check-input" type="checkbox" value="${registro[1]}"/>  
+                            </div>  
+                        </div>`;  
+                    lista.append(item);  
+                });  
+            });  
+    
+            $('.panel-loader').addClass('d-none');  
+            lista.removeClass('d-none');  
+            $('.btn-float').removeClass('d-none');  
+    
+        } catch (error) {  
+            console.error("Error al obtener registros:", error);  
+        }   
+    }
+
+    $(document).ready(function(){
+        leerRegistros();
+
+        //Cambiar el fondo del elemento checkeado
+        $(document).on('click', '.panel-lista-invitados .elem-item', function() {
+            const checkbox = $(this).find('.form-check-input');
+            // Alternar el estado de 'checked'
+            const isChecked = !checkbox.prop('checked');
+            checkbox.prop('checked', !checkbox.prop('checked'));
+
+            // Cambiar el color de fondo basado en el estado del checkbox
+            if (isChecked) {
+                $(this).css('background-color', '#f0f8ff'); // Color de fondo cuando está seleccionado
+            } else {
+                $(this).css('background-color', ''); // Restaurar fondo a su estado original
+            }
+        });
+
+        //Agregar los elementos checkeados a la lista de Presentacionde Invitados
+        $('#add').on('click', async function(event) {  
+            event.preventDefault();  
+
+            // Verificar si hay elementos seleccionados  
+            if ($('.panel-lista-invitados .elem-item .form-check-input:checked').length === 0) {  
+                alert('No has seleccionado ningún elemento.');  
+            } else {  
+                $('.go-panel-loader').removeClass('d-none');  
+
+                // Recoger registros a enviar  
+                let records = [];  
+
+                // Iterar sobre los elementos seleccionados  
+                $('.panel-lista-invitados .elem-item .form-check-input:checked').each(function() {  
+                    let nombre = $(this).closest('.elem-item').find('.field-nombre').text();  
+                    let cargo = $(this).closest('.elem-item').find('.field-cargo').text();  
+                    let url = $(this).closest('.elem-item').find('.foto').attr('data-src');
+
+                    // Con poner los registros como una cadena de texto en formato JSON para el URL  
+                    records.push([nombre, cargo, url]);  
+                });  
+
+                try {
+                            
+                    console.log(records);
+                            
+                    // Llamar al método doGet a través de GET  
+                    const deleteResponse = await fetch(`${apiUrl}?action=borrarAntesOrdenarPresentacionInvitados`);  
+
+                    if (!deleteResponse.ok) {  
+                        throw new Error('Error al eliminar registros: ' + await deleteResponse.text());  
+                    }
+                    console.log(await deleteResponse.text()); // Para confirmar que se eliminó correctamente  
+
+                    // Llamar al método doGet con los registros como parámetro  
+                    const addResponse = await fetch(`${apiUrl}?action=crearNuevoOrdenPrsentacionInvitados&records=${JSON.stringify(records)}`);  
+
+                    if (!addResponse.ok) {  
+                        throw new Error('Error al agregar registros: ' + await addResponse.text());  
+                    }
+
+                    // Obtener la respuesta y mostrarla  
+                    const result = await addResponse.text();  
+                    alert(result);  
+                    console.log(result); 
+                    cargar_pagina('paginas/presentacion_invitados/presentacion_invitados.html', 'Presentación Invitados');  
+
+                } catch (error) {  
+                    console.error(error);  
+                    alert('Ha ocurrido un error: ' + error.message);  
+                } finally {  
+                    $('.go-panel-loader').addClass('d-none'); // Esconder el loader al final  
+                }  
+            }  
+        });
+
+    });
+
+    
+    </script>
